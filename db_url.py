@@ -22,11 +22,12 @@ def get_database_env_vars(scheme, user, password, host, port, database):
     """Returns the environment variables to set to connect to a database."""
     if scheme == 'postgres':
         env_vars = {
-            'PGUSER': user,
             'PGPASSWORD': password,
             'PGHOST': host,
             'PGDATABASE': database
         }
+        if user:
+            env_vars['PGUSER'] = user
 
         if port:
             env_vars['PGPORT'] = str(port)
@@ -50,7 +51,9 @@ def parse_db_url(database_url):
     parsed_url = urlparse.urlparse(database_url)
 
     scheme = parsed_url.scheme
-    user = parsed_url.username
+    user = parsed_url.username or ''
+    password = parsed_url.password or ''
+    host = parsed_url.hostname or ''
     database = parsed_url.path[1:]
 
     database_command = get_connection_command(scheme, user, database)
@@ -59,8 +62,8 @@ def parse_db_url(database_url):
 
     return database_command, get_database_env_vars(scheme,
                                                    user,
-                                                   parsed_url.password,
-                                                   parsed_url.hostname,
+                                                   password,
+                                                   host,
                                                    parsed_url.port,
                                                    database)
 
@@ -80,7 +83,11 @@ def connect_to_database():
     os.environ.update(env_vars)
 
     command = base_connection_command + sys.argv[1:]
-    subprocess.call(command)
+
+    try:
+        subprocess.call(command)
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == '__main__':
