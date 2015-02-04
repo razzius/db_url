@@ -73,6 +73,7 @@ def connect_to_database():
     database_url = os.environ.get('DATABASE_URL', None)
     if not database_url:
         print('Error: set the DATABASE_URL environment variable')
+        exit(1)
 
     try:
         base_connection_command, env_vars = parse_db_url(database_url)
