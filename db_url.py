@@ -95,6 +95,10 @@ def connect_to_database():
 
     try:
         subprocess.call(command)
+    except OSError:
+        missing_command = base_connection_command[0]
+        print('Error: missing database client "{}"'.format(missing_command))
+        print('Ensure the "{}" command is on your PATH'.format(missing_command))
     except KeyboardInterrupt:
         pass
 
