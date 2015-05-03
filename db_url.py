@@ -8,7 +8,7 @@ import urlparse
 
 def get_connection_command(scheme, user, database):
     """Returns the token list of the base command to connect to a database."""
-    if scheme == 'postgres':
+    if scheme in ['postgres', 'postgresql']:
         return ['psql']
     elif scheme == 'mysql':
         return ['mysql', '-u', user, '-D', database]
@@ -20,7 +20,7 @@ def get_connection_command(scheme, user, database):
 
 def get_database_env_vars(scheme, user, password, host, port, database):
     """Returns the environment variables to set to connect to a database."""
-    if scheme == 'postgres':
+    if scheme in ['postgres', 'postgresql']:
         env_vars = {
             'PGPASSWORD': password,
             'PGHOST': host,
@@ -56,6 +56,12 @@ def parse_db_url(database_url):
     host = parsed_url.hostname or ''
     database = parsed_url.path[1:]
 
+    query_params = dict(urlparse.parse_qsl(parsed_url.query))
+    if 'user' in query_params:
+        user = query_params['user']
+    if 'password' in query_params:
+        password = query_params['password']
+
     database_command = get_connection_command(scheme, user, database)
     if not database_command:
         raise ValueError('Scheme "{}" not recognized.'.format(scheme))
@@ -74,6 +80,8 @@ def connect_to_database():
     if not database_url:
         print('Error: set the DATABASE_URL environment variable')
         exit(1)
+
+    database_url = database_url.strip('jdbc:')
 
     try:
         base_connection_command, env_vars = parse_db_url(database_url)
